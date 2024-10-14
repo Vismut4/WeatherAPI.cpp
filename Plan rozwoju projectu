@@ -1,0 +1,16 @@
+Tydzień 1:
+Zbadanie API OpenWeatherMap.
+Stworzenie szkieletu aplikacji (podstawowa obsługa zapytań HTTP).
+
+Tydzień 2:
+Implementacja interfejsu użytkownika w terminalu.
+Walidacja danych wejściowych (sprawdzanie poprawności nazwy miasta).
+
+Tydzień 3:
+Obsługa odpowiedzi JSON (wyświetlanie wyników: temperatura, wilgotność).
+Obsługa błędów (np. brak internetu, miasto nieznalezione).
+
+Tydzień 4:
+Optymalizacja kodu.
+Testy aplikacji na różnych miastach.
+Dodanie dokumentacji i finalizacja projektu.
