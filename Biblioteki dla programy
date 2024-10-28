@@ -1,0 +1,10 @@
+Przy używaniu tej programy w Visual Studio 2022 potrzebni:
+1.JsonCpp-source
+2.libcurl-v143-shared
+3.SFML.NET
+4.SFML-cpp
+5.SFML-cpp.redist
+6.sfml-graphics
+7.sfml-graphics.redist
+8.sfml-window
+9.sfml-window.redist
