@@ -3,8 +3,9 @@
 #include <json/json.h>
 #include <string>
 #include <iostream>
-#include <iomanip>  /
-#include <sstream> 
+#include <iomanip>
+#include <sstream>
+#include "WeatherImages.h"
 
 using namespace std;
 
@@ -17,12 +18,12 @@ size_t callback(const char* in, size_t size, size_t num, string* out) {
 int main() {
     string apiKey = "2ec0ddea917f8211e0fb0b8919c86228";
     string city;
-    bool weatherFetched = false;  
+    bool weatherFetched = false;
 
-    sf::RenderWindow window(sf::VideoMode(1080, 640), "Prognoz Pogody");
+    sf::RenderWindow window(sf::VideoMode(1080, 640), "Prognoza Pogody");
 
     sf::Font font;
-    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {  
+    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
         cerr << "Blad ladowania czcionki!" << endl;
         return 1;
     }
@@ -47,6 +48,26 @@ int main() {
     humidityText.setPosition(20, 200);
     humidityText.setFillColor(sf::Color::White);
 
+    sf::RectangleShape blackSquare(sf::Vector2f(300.f, 250.f));
+    blackSquare.setFillColor(sf::Color::Black);
+    blackSquare.setPosition(10, 10);
+
+    sf::Texture weatherTexture;
+    sf::Sprite weatherSprite;
+
+    weatherTexture.loadFromFile("C:/Users/ASUS/source/repos/Project_Prognoza_Pogody/Project_Prognoza_Pogody/Weatherjpg/default.jpg");
+    weatherSprite.setTexture(weatherTexture);
+
+    WeatherImages weatherImages;
+
+    sf::RectangleShape restartButton(sf::Vector2f(120.f, 50.f));
+    restartButton.setFillColor(sf::Color::Magenta);
+    restartButton.setPosition(920, 570);
+
+    sf::Text restartText("Restart", font, 24);
+    restartText.setFillColor(sf::Color::White);
+    restartText.setPosition(930, 580);
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -54,7 +75,7 @@ int main() {
                 window.close();
             }
             if (event.type == sf::Event::TextEntered && !weatherFetched) {
-                if (event.text.unicode == '\b') {  
+                if (event.text.unicode == '\b') {
                     if (!city.empty()) {
                         city.pop_back();
                     }
@@ -65,7 +86,6 @@ int main() {
                 cityInput.setString(city);
             }
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Return && !city.empty() && !weatherFetched) {
-
                 string url = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiKey + "&units=metric";
 
                 CURL* curl = curl_easy_init();
@@ -103,22 +123,42 @@ int main() {
                             stream << fixed << std::setprecision(2) << temp;
                             tempText.setString("Temperatura: " + stream.str() + " °C");
                             humidityText.setString("Wilgotnosc: " + to_string(humidity) + " %");
-                            weatherFetched = true; 
+
+                            string imagePath = weatherImages.getImagePath(weather);
+                            weatherTexture.loadFromFile(imagePath);
+                            weatherSprite.setTexture(weatherTexture);
                         }
                         else {
-                            cerr << "Błąd parsowania JSON: " << errs << endl;
-                            weatherText.setString("Blad parsowania JSON");
+                            cerr << "Blad podczas parsowania JSON: " << errs << endl;
                         }
 
                         delete reader;
                     }
-
                     curl_easy_cleanup(curl);
+                }
+                weatherFetched = true;
+            }
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    if (restartButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        city.clear();
+                        cityInput.setString("");
+                        weatherText.setString("");
+                        tempText.setString("");
+                        humidityText.setString("");
+                        weatherFetched = false;
+
+                        weatherTexture.loadFromFile("C:/Users/ASUS/source/repos/Project_Prognoza_Pogody/Project_Prognoza_Pogody/Weatherjpg/default.jpg");
+                        weatherSprite.setTexture(weatherTexture);
+                    }
                 }
             }
         }
 
         window.clear();
+        window.draw(weatherSprite);
+        window.draw(blackSquare);
         window.draw(inputText);
         window.draw(cityInput);
         if (weatherFetched) {
@@ -126,6 +166,8 @@ int main() {
             window.draw(tempText);
             window.draw(humidityText);
         }
+        window.draw(restartButton);
+        window.draw(restartText);
         window.display();
     }
 
