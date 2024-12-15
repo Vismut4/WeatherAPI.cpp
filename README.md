@@ -23,4 +23,4 @@ Aby uruchomić projekt, potrzebne są:
 
 Kompilator C++.
 Zainstalowane biblioteki libcurl oraz JsonCpp.
-Klucz API do OpenWeatherMap (można zarejestrować się na OpenWeatherMap i uzyskać darmowy klucz).
+Klucz API do Weatherapi (można zarejestrować się na Weatherapi i uzyskać darmowy klucz).
