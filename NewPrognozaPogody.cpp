@@ -60,13 +60,6 @@ void fetchWeatherData(const string& city, string& temperatureToday, string& cond
                 float tempC2 = root["forecast"]["forecastday"][2]["day"]["avgtemp_c"].asFloat();
                 string condition2 = root["forecast"]["forecastday"][2]["day"]["condition"]["text"].asString();
                 nextDays.push_back({ date2, roundToTwoDecimalPlaces(tempC2) + "°C, " + condition2 });
-
-                string date3 = root["forecast"]["forecastday"][3]["date"].asString();
-                float tempC3 = root["forecast"]["forecastday"][3]["day"]["avgtemp_c"].asFloat();
-                string condition3 = root["forecast"]["forecastday"][3]["day"]["condition"]["text"].asString();
-                nextDays.push_back({ date3, roundToTwoDecimalPlaces(tempC3) + "°C, " + condition3 });
-
-
             }
             else {
                 cerr << "Error parsing JSON response: " << errs << endl;
@@ -85,13 +78,21 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(800, 800), "Weather Info");
 
+    // Obrazek na tło
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/BackIMG.jpg")) {
+        cerr << "Failed to load background image!" << endl;
+        return 1;
+    }
+    sf::Sprite backgroundSprite(backgroundTexture);
+
     sf::Font font;
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
-        cerr << "Blad ladowania czcionki!" << endl;
+        cerr << "Failed to load font!" << endl;
         return 1;
     }
 
-    sf::Text instructionText("Wprowadz nazwe miasta i nacisnij Enter:", font, 24);
+    sf::Text instructionText("Enter city name and press Enter:", font, 24);
     instructionText.setPosition(10, 10);
 
     sf::Text inputText("", font, 24);
@@ -107,9 +108,6 @@ int main() {
     sf::Text forecastText2("", font, 24);
     forecastText2.setPosition(10, 300);
 
-
-
-
     string currentInput = "";
     bool isCityEntered = false;
 
@@ -120,14 +118,14 @@ int main() {
                 window.close();
 
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == 3 && currentInput.length() > 0) {
+                if (event.text.unicode == 8 && currentInput.length() > 0) { 
                     currentInput.pop_back();
                 }
-                else if (event.text.unicode == 13) {
+                else if (event.text.unicode == 13) { 
                     city = currentInput;
                     if (!city.empty()) {
                         fetchWeatherData(city, temperatureToday, conditionToday, nextDays);
-                        weatherTodayText.setString("Dzisiaj: " + temperatureToday + "°C, " + conditionToday);
+                        weatherTodayText.setString("Today: " + temperatureToday + "°C, " + conditionToday);
                         if (nextDays.size() >= 2) {
                             forecastText1.setString(nextDays[0].first + ": " + nextDays[0].second);
                             forecastText2.setString(nextDays[1].first + ": " + nextDays[1].second);
@@ -144,6 +142,7 @@ int main() {
         inputText.setString(currentInput);
 
         window.clear();
+        window.draw(backgroundSprite); 
         window.draw(instructionText);
         window.draw(inputText);
 
