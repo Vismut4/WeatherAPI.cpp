@@ -20,7 +20,7 @@ string roundToTwoDecimalPlaces(float value) {
 
 void fetchWeatherData(const string& city, string& temperatureToday, string& conditionToday, vector<pair<string, string>>& nextDays) {
     string apiKey = "b1d71811cfce454c87a140824242511";
-    string url = "http://api.weatherapi.com/v1/forecast.json?key=" + apiKey + "&q=" + city + "&days=7";
+    string url = "http://api.weatherapi.com/v1/forecast.json?key=" + apiKey + "&q=" + city + "&days=3";
 
     CURL* curl;
     CURLcode res;
@@ -66,20 +66,6 @@ void fetchWeatherData(const string& city, string& temperatureToday, string& cond
                 string condition3 = root["forecast"]["forecastday"][3]["day"]["condition"]["text"].asString();
                 nextDays.push_back({ date3, roundToTwoDecimalPlaces(tempC3) + "°C, " + condition3 });
 
-                string date4 = root["forecast"]["forecastday"][4]["date"].asString();
-                float tempC4 = root["forecast"]["forecastday"][4]["day"]["avgtemp_c"].asFloat();
-                string condition4 = root["forecast"]["forecastday"][4]["day"]["condition"]["text"].asString();
-                nextDays.push_back({ date4, roundToTwoDecimalPlaces(tempC4) + "°C, " + condition4 });
-
-                string date5 = root["forecast"]["forecastday"][5]["date"].asString();
-                float tempC5 = root["forecast"]["forecastday"][5]["day"]["avgtemp_c"].asFloat();
-                string condition5 = root["forecast"]["forecastday"][5]["day"]["condition"]["text"].asString();
-                nextDays.push_back({ date5, roundToTwoDecimalPlaces(tempC5) + "°C, " + condition5 });
-
-                string date6 = root["forecast"]["forecastday"][6]["date"].asString();
-                float tempC6 = root["forecast"]["forecastday"][6]["day"]["avgtemp_c"].asFloat();
-                string condition6 = root["forecast"]["forecastday"][6]["day"]["condition"]["text"].asString();
-                nextDays.push_back({ date6, roundToTwoDecimalPlaces(tempC6) + "°C, " + condition6 });
 
             }
             else {
@@ -121,17 +107,7 @@ int main() {
     sf::Text forecastText2("", font, 24);
     forecastText2.setPosition(10, 300);
 
-    sf::Text forecastText3("", font, 24);
-    forecastText3.setPosition(10, 350);
 
-    sf::Text forecastText4("", font, 24);
-    forecastText4.setPosition(10, 400);
-
-    sf::Text forecastText5("", font, 24);
-    forecastText5.setPosition(10, 450);
-
-    sf::Text forecastText6("", font, 24);
-    forecastText6.setPosition(10, 500);
 
 
     string currentInput = "";
@@ -144,7 +120,7 @@ int main() {
                 window.close();
 
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == 7 && currentInput.length() > 0) {
+                if (event.text.unicode == 3 && currentInput.length() > 0) {
                     currentInput.pop_back();
                 }
                 else if (event.text.unicode == 13) {
@@ -152,13 +128,9 @@ int main() {
                     if (!city.empty()) {
                         fetchWeatherData(city, temperatureToday, conditionToday, nextDays);
                         weatherTodayText.setString("Dzisiaj: " + temperatureToday + "°C, " + conditionToday);
-                        if (nextDays.size() >= 6) {
+                        if (nextDays.size() >= 2) {
                             forecastText1.setString(nextDays[0].first + ": " + nextDays[0].second);
                             forecastText2.setString(nextDays[1].first + ": " + nextDays[1].second);
-                            forecastText3.setString(nextDays[2].first + ": " + nextDays[2].second);
-                            forecastText4.setString(nextDays[3].first + ": " + nextDays[3].second);
-                            forecastText5.setString(nextDays[4].first + ": " + nextDays[4].second);
-                            forecastText6.setString(nextDays[5].first + ": " + nextDays[5].second);
                         }
                         isCityEntered = true;
                     }
@@ -179,10 +151,6 @@ int main() {
             window.draw(weatherTodayText);
             window.draw(forecastText1);
             window.draw(forecastText2);
-            window.draw(forecastText3);
-            window.draw(forecastText4);
-            window.draw(forecastText5);
-            window.draw(forecastText6);
         }
 
         window.display();
