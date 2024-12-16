@@ -1,6 +1,6 @@
 Weather Api 🌤️
 Opis projektu
-Weather App to aplikacja konsolowa napisana w języku C++, która umożliwia użytkownikom pobieranie aktualnych informacji o pogodzie dla wybranego miasta. Aplikacja korzysta z API OpenWeatherMap do pobierania danych o temperaturze, opisie warunków pogodowych oraz wilgotności powietrza.
+Weather App to aplikacja konsolowa napisana w języku C++, która umożliwia użytkownikom pobieranie aktualnych informacji o pogodzie dla wybranego miasta. Aplikacja korzysta z API WeatherAPI do pobierania danych o temperaturze, opisie warunków pogodowych oraz wilgotności powietrza.
 
 Funkcjonalności
 Pobieranie prognozy pogody na podstawie nazwy miasta.
