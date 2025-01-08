@@ -18,7 +18,7 @@ string roundToTwoDecimalPlaces(float value) {
     return oss.str();
 }
 
-void fetchWeatherData(const string& city, string& temperatureToday, string& conditionToday, vector<pair<string, string>>& nextDays) {
+void fetchWeatherData(const string& city, string& temperatureToday, string& conditionToday, vector<pair<string, string>>& nextDays, bool& isDay) {
     string apiKey = "b1d71811cfce454c87a140824242511";
     string url = "http://api.weatherapi.com/v1/forecast.json?key=" + apiKey + "&q=" + city + "&days=3";
 
@@ -49,6 +49,8 @@ void fetchWeatherData(const string& city, string& temperatureToday, string& cond
                 temperatureToday = roundToTwoDecimalPlaces(tempC_today);
                 conditionToday = condition_today;
 
+                isDay = root["current"]["is_day"].asBool();
+
                 nextDays.clear();
 
                 string date1 = root["forecast"]["forecastday"][1]["date"].asString();
@@ -75,16 +77,20 @@ int main() {
     string city;
     string temperatureToday, conditionToday;
     vector<pair<string, string>> nextDays;
+    bool isDay = true;
 
-    sf::RenderWindow window(sf::VideoMode(800, 800), "Weather Info");
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Weather Info");
 
-    // Obrazek na tło
-    sf::Texture backgroundTexture;
-    if (!backgroundTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/BackIMG.jpg")) {
-        cerr << "Failed to load background image!" << endl;
+    // Tło 
+    sf::Texture defaultTexture, dayTexture, nightTexture;
+    if (!defaultTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/default_background.png") ||
+        !dayTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/day_gradient.png") ||
+        !nightTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/BackIMG.jpg")) {
+        cerr << "Failed to load background images!" << endl;
         return 1;
     }
-    sf::Sprite backgroundSprite(backgroundTexture);
+
+    sf::Sprite backgroundSprite(defaultTexture);
 
     sf::Font font;
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
@@ -92,12 +98,23 @@ int main() {
         return 1;
     }
 
-    sf::Text instructionText("Enter city name and press Enter:", font, 24);
-    instructionText.setPosition(10, 10);
-
     sf::Text inputText("", font, 24);
     inputText.setPosition(10, 50);
-    inputText.setFillColor(sf::Color::White);
+    inputText.setFillColor(sf::Color::Black);
+
+    sf::RectangleShape inputBox(sf::Vector2f(300, 40));
+    inputBox.setPosition(10, 50);
+    inputBox.setFillColor(sf::Color::White);
+    inputBox.setOutlineColor(sf::Color::Black);
+    inputBox.setOutlineThickness(1);
+
+    sf::RectangleShape button(sf::Vector2f(100, 40));
+    button.setPosition(320, 50);
+    button.setFillColor(sf::Color(100, 149, 237)); // Color przecziska 
+
+    sf::Text buttonText("Szukać", font, 24);
+    buttonText.setPosition(330, 55);
+    buttonText.setFillColor(sf::Color::White);
 
     sf::Text weatherTodayText("", font, 24);
     weatherTodayText.setPosition(10, 150);
@@ -118,23 +135,35 @@ int main() {
                 window.close();
 
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == 8 && currentInput.length() > 0) { 
+                if (event.text.unicode == 8 && !currentInput.empty()) { // Backspace
                     currentInput.pop_back();
                 }
-                else if (event.text.unicode == 13) { 
-                    city = currentInput;
-                    if (!city.empty()) {
-                        fetchWeatherData(city, temperatureToday, conditionToday, nextDays);
-                        weatherTodayText.setString("Today: " + temperatureToday + "°C, " + conditionToday);
-                        if (nextDays.size() >= 2) {
-                            forecastText1.setString(nextDays[0].first + ": " + nextDays[0].second);
-                            forecastText2.setString(nextDays[1].first + ": " + nextDays[1].second);
-                        }
-                        isCityEntered = true;
-                    }
-                }
-                else if (event.text.unicode < 128) {
+                else if (event.text.unicode < 128 && event.text.unicode != 13) { // Add char
                     currentInput += static_cast<char>(event.text.unicode);
+                }
+            }
+
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        city = currentInput;
+                        if (!city.empty()) {
+                            fetchWeatherData(city, temperatureToday, conditionToday, nextDays, isDay);
+
+                            if (isDay)
+                                backgroundSprite.setTexture(dayTexture);
+                            else
+                                backgroundSprite.setTexture(nightTexture);
+
+                            weatherTodayText.setString("Today: " + temperatureToday + "°C, " + conditionToday);
+                            if (nextDays.size() >= 2) {
+                                forecastText1.setString(nextDays[0].first + ": " + nextDays[0].second);
+                                forecastText2.setString(nextDays[1].first + ": " + nextDays[1].second);
+                            }
+                            isCityEntered = true;
+                        }
+                    }
                 }
             }
         }
@@ -142,9 +171,11 @@ int main() {
         inputText.setString(currentInput);
 
         window.clear();
-        window.draw(backgroundSprite); 
-        window.draw(instructionText);
+        window.draw(backgroundSprite);
+        window.draw(inputBox);
         window.draw(inputText);
+        window.draw(button);
+        window.draw(buttonText);
 
         if (isCityEntered) {
             window.draw(weatherTodayText);
