@@ -4,6 +4,9 @@
 #include <json/json.h>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -73,15 +76,37 @@ void fetchWeatherData(const string& city, string& temperatureToday, string& cond
     curl_global_cleanup();
 }
 
+void loadCityHistory(vector<string>& cityHistory) {
+    ifstream historyFile("city_history.txt");
+    string city;
+
+    while (getline(historyFile, city)) {
+        cityHistory.push_back(city);
+    }
+    historyFile.close();
+}
+
+void saveCityHistory(const vector<string>& cityHistory) {
+    ofstream historyFile("city_history.txt");
+    for (const auto& city : cityHistory) {
+        historyFile << city << endl;
+    }
+    historyFile.close();
+}
+
 int main() {
     string city;
     string temperatureToday, conditionToday;
     vector<pair<string, string>> nextDays;
     bool isDay = true;
+    vector<string> cityHistory;  // Zachowuje historię miast
+
+    // Ładowanie historii 
+    loadCityHistory(cityHistory);
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "Weather Info");
 
-    // Tło 
+    // Tło
     sf::Texture defaultTexture, dayTexture, nightTexture;
     if (!defaultTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/default_background.png") ||
         !dayTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/day_gradient.png") ||
@@ -110,11 +135,19 @@ int main() {
 
     sf::RectangleShape button(sf::Vector2f(100, 40));
     button.setPosition(320, 50);
-    button.setFillColor(sf::Color(100, 149, 237)); // Color przecziska 
+    button.setFillColor(sf::Color(100, 149, 237)); 
 
-    sf::Text buttonText("Szukać", font, 24);
+    sf::Text buttonText("Szukac", font, 24);
     buttonText.setPosition(330, 55);
     buttonText.setFillColor(sf::Color::White);
+
+    sf::RectangleShape historyButton(sf::Vector2f(100, 40));
+    historyButton.setPosition(440, 50);
+    historyButton.setFillColor(sf::Color(100, 149, 237)); 
+
+    sf::Text historyButtonText("History", font, 24);
+    historyButtonText.setPosition(450, 55);
+    historyButtonText.setFillColor(sf::Color::White);
 
     sf::Text weatherTodayText("", font, 24);
     weatherTodayText.setPosition(10, 150);
@@ -125,8 +158,16 @@ int main() {
     sf::Text forecastText2("", font, 24);
     forecastText2.setPosition(10, 300);
 
+    // Tekst, który wyświetli historię miast
+    sf::Text historyText("", font, 18);
+    historyText.setPosition(560, 50); 
+    historyText.setFillColor(sf::Color::Black);
+    historyText.setOutlineColor(sf::Color::White); 
+    historyText.setOutlineThickness(1); 
+
     string currentInput = "";
     bool isCityEntered = false;
+    bool isHistoryVisible = false;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -146,10 +187,20 @@ int main() {
             if (event.type == sf::Event::MouseButtonPressed) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                    // Jeśli klikniesz przycisk „Szukac”.
                     if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         city = currentInput;
                         if (!city.empty()) {
                             fetchWeatherData(city, temperatureToday, conditionToday, nextDays, isDay);
+
+                            if (find(cityHistory.begin(), cityHistory.end(), city) == cityHistory.end()) {
+                                if (cityHistory.size() >= 3) {
+                                    cityHistory.erase(cityHistory.begin());
+                                }
+                                cityHistory.push_back(city);
+                                saveCityHistory(cityHistory);  
+                            }
 
                             if (isDay)
                                 backgroundSprite.setTexture(dayTexture);
@@ -164,9 +215,33 @@ int main() {
                             isCityEntered = true;
                         }
                     }
+                    else if (historyButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        isHistoryVisible = !isHistoryVisible; 
+                    }
+                    else if (isHistoryVisible) {
+                        for (int i = 0; i < cityHistory.size(); ++i) {
+                            sf::FloatRect cityRect(560, 50 + i * 30, 300, 20);  
+                            if (cityRect.contains(mousePos.x, mousePos.y)) {
+                                currentInput = cityHistory[i];
+                                isHistoryVisible = false;
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        string suggestions = "";
+        if (isHistoryVisible) {
+            for (int i = 0; i < cityHistory.size(); ++i) {
+                suggestions += cityHistory[i] + "\n";
+            }
+            historyText.setString(suggestions);
+        }
+        else {
+            historyText.setString("");
+        }
+
 
         inputText.setString(currentInput);
 
@@ -176,6 +251,9 @@ int main() {
         window.draw(inputText);
         window.draw(button);
         window.draw(buttonText);
+        window.draw(historyButton);
+        window.draw(historyButtonText);
+        window.draw(historyText);
 
         if (isCityEntered) {
             window.draw(weatherTodayText);
