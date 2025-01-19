@@ -7,8 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include "GradientsTexture.h" // Подключаем новый файл с градиентами
-
+#include "GradientsTexture.h" 
 using namespace std;
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
