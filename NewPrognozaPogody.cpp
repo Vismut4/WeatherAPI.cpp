@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include "GradientsTexture.h" // Подключаем новый файл с градиентами
 
 using namespace std;
 
@@ -99,30 +100,27 @@ int main() {
     string temperatureToday, conditionToday;
     vector<pair<string, string>> nextDays;
     bool isDay = true;
-    vector<string> cityHistory;  // Zachowuje historię miast
+    vector<string> cityHistory;
 
-    // Ładowanie historii 
+    // Load city history
     loadCityHistory(cityHistory);
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "Weather Info");
 
-    // Tło
-    sf::Texture defaultTexture, dayTexture, nightTexture;
-    if (!defaultTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/default_background.png") ||
-        !dayTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/day_gradient.png") ||
-        !nightTexture.loadFromFile("C:/Users/ASUS/source/repos/NewPrognozaPogody/Image/BackIMG.jpg")) {
-        cerr << "Failed to load background images!" << endl;
-        return 1;
-    }
+    // Using the gradient functions
+    sf::Texture dayTexture = createDayGradient();
+    sf::Texture nightTexture = createNightGradient();
+    sf::Texture noCityTexture = createNoCityGradient();
 
-    sf::Sprite backgroundSprite(defaultTexture);
+    sf::Sprite backgroundSprite(noCityTexture); // Default to no city texture
 
     sf::Font font;
-    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+    if (!font.loadFromFile("arial.ttf")) {
         cerr << "Failed to load font!" << endl;
         return 1;
     }
 
+    // Texts and buttons
     sf::Text inputText("", font, 24);
     inputText.setPosition(10, 50);
     inputText.setFillColor(sf::Color::Black);
@@ -135,7 +133,7 @@ int main() {
 
     sf::RectangleShape button(sf::Vector2f(100, 40));
     button.setPosition(320, 50);
-    button.setFillColor(sf::Color(100, 149, 237)); 
+    button.setFillColor(sf::Color(100, 149, 237));
 
     sf::Text buttonText("Szukac", font, 24);
     buttonText.setPosition(330, 55);
@@ -143,11 +141,19 @@ int main() {
 
     sf::RectangleShape historyButton(sf::Vector2f(100, 40));
     historyButton.setPosition(440, 50);
-    historyButton.setFillColor(sf::Color(100, 149, 237)); 
+    historyButton.setFillColor(sf::Color(100, 149, 237));
 
     sf::Text historyButtonText("History", font, 24);
     historyButtonText.setPosition(450, 55);
     historyButtonText.setFillColor(sf::Color::White);
+
+    sf::RectangleShape newWindowButton(sf::Vector2f(150, 40));
+    newWindowButton.setPosition(320, 100);
+    newWindowButton.setFillColor(sf::Color(100, 149, 237));
+
+    sf::Text newWindowButtonText("Wykres", font, 24);
+    newWindowButtonText.setPosition(330, 105);
+    newWindowButtonText.setFillColor(sf::Color::White);
 
     sf::Text weatherTodayText("", font, 24);
     weatherTodayText.setPosition(10, 150);
@@ -158,12 +164,12 @@ int main() {
     sf::Text forecastText2("", font, 24);
     forecastText2.setPosition(10, 300);
 
-    // Tekst, który wyświetli historię miast
+    // Text to show city history
     sf::Text historyText("", font, 18);
-    historyText.setPosition(560, 50); 
+    historyText.setPosition(560, 50);
     historyText.setFillColor(sf::Color::Black);
-    historyText.setOutlineColor(sf::Color::White); 
-    historyText.setOutlineThickness(1); 
+    historyText.setOutlineColor(sf::Color::White);
+    historyText.setOutlineThickness(1);
 
     string currentInput = "";
     bool isCityEntered = false;
@@ -188,7 +194,7 @@ int main() {
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
-                    // Jeśli klikniesz przycisk „Szukac”.
+                    // Click "Szukac" button
                     if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         city = currentInput;
                         if (!city.empty()) {
@@ -199,7 +205,7 @@ int main() {
                                     cityHistory.erase(cityHistory.begin());
                                 }
                                 cityHistory.push_back(city);
-                                saveCityHistory(cityHistory);  
+                                saveCityHistory(cityHistory);
                             }
 
                             if (isDay)
@@ -214,13 +220,30 @@ int main() {
                             }
                             isCityEntered = true;
                         }
+                        else {
+                            backgroundSprite.setTexture(noCityTexture);  // Green gradient if city is not entered
+                            isCityEntered = false;
+                        }
                     }
                     else if (historyButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        isHistoryVisible = !isHistoryVisible; 
+                        isHistoryVisible = !isHistoryVisible;
+                    }
+                    // Open new window
+                    else if (newWindowButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        sf::RenderWindow newWindow(sf::VideoMode(800, 600), "New Window");
+                        while (newWindow.isOpen()) {
+                            sf::Event newEvent;
+                            while (newWindow.pollEvent(newEvent)) {
+                                if (newEvent.type == sf::Event::Closed)
+                                    newWindow.close();
+                            }
+                            newWindow.clear(sf::Color::White);
+                            newWindow.display();
+                        }
                     }
                     else if (isHistoryVisible) {
                         for (int i = 0; i < cityHistory.size(); ++i) {
-                            sf::FloatRect cityRect(560, 50 + i * 30, 300, 20);  
+                            sf::FloatRect cityRect(560, 50 + i * 30, 300, 20);
                             if (cityRect.contains(mousePos.x, mousePos.y)) {
                                 currentInput = cityHistory[i];
                                 isHistoryVisible = false;
@@ -242,7 +265,6 @@ int main() {
             historyText.setString("");
         }
 
-
         inputText.setString(currentInput);
 
         window.clear();
@@ -253,6 +275,8 @@ int main() {
         window.draw(buttonText);
         window.draw(historyButton);
         window.draw(historyButtonText);
+        window.draw(newWindowButton);
+        window.draw(newWindowButtonText);
         window.draw(historyText);
 
         if (isCityEntered) {
