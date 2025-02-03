@@ -7,7 +7,6 @@ Pobieranie prognozy pogody na podstawie nazwy miasta.
 Wyświetlanie informacji o:
 Temperaturze w stopniach Celsjusza.
 Opisie pogody (np. "zachmurzenie", "deszcz").
-Wilgotności powietrza.
 Obsługa błędów (np. brak internetu, nieznalezione miasto).
 Prosty i przejrzysty interfejs użytkownika.
 
