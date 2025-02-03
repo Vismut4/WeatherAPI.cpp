@@ -216,12 +216,18 @@ int main() {
     // Teksty wyświetlające aktualną pogodę
     sf::Text weatherTodayText("", font, 24);
     weatherTodayText.setPosition(10, 200);
+    weatherTodayText.setOutlineColor(sf::Color::Black);
+    weatherTodayText.setOutlineThickness(2);
 
     sf::Text forecastText1("", font, 24);
     forecastText1.setPosition(10, 250);
+    forecastText1.setOutlineColor(sf::Color::Black);
+    forecastText1.setOutlineThickness(2);
 
     sf::Text forecastText2("", font, 24);
     forecastText2.setPosition(10, 300);
+    forecastText2.setOutlineColor(sf::Color::Black);
+    forecastText2.setOutlineThickness(2);
 
     // Tekst wyświetlający historię wyszukiwań
     sf::Text historyText("", font, 24);
