@@ -10,17 +10,20 @@
 #include "GradientsTexture.h" 
 using namespace std;
 
+// Funkcja callback do zapisu danych pobieranych przez CURL
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
+// Zaokrąglanie wartości do dwóch miejsc po przecinku
 string roundToTwoDecimalPlaces(float value) {
     ostringstream oss;
     oss << fixed << setprecision(2) << value;
     return oss.str();
 }
 
+// Pobieranie miasta na podstawie adresu IP użytkownika
 string getCityByIP() {
     string url = "http://ip-api.com/json/";
     CURL* curl;
@@ -60,6 +63,7 @@ string getCityByIP() {
 }
 
 
+// Pobieranie danych pogodowych z API na podstawie nazwy miasta
 void fetchWeatherData(const string& city, string& temperatureToday, string& conditionToday, vector<pair<string, string>>& nextDays, bool& isDay) {
     string apiKey = "b1d71811cfce454c87a140824242511";
     string url = "http://api.weatherapi.com/v1/forecast.json?key=" + apiKey + "&q=" + city + "&days=3";
@@ -115,6 +119,8 @@ void fetchWeatherData(const string& city, string& temperatureToday, string& cond
     curl_global_cleanup();
 }
 
+
+// Wczytywanie historii wyszukiwań miast
 void loadCityHistory(vector<string>& cityHistory) {
     ifstream historyFile("city_history.txt");
     string city;
@@ -125,6 +131,7 @@ void loadCityHistory(vector<string>& cityHistory) {
     historyFile.close();
 }
 
+// Zapisywanie historii wyszukiwań miast
 void saveCityHistory(const vector<string>& cityHistory) {
     ofstream historyFile("city_history.txt");
     for (const auto& city : cityHistory) {
@@ -144,28 +151,33 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "Weather Info");
 
+    // Ładowanie tekstur dla różnych warunków pogodowych
     sf::Texture dayTexture = createDayGradient();
     sf::Texture nightTexture = createNightGradient();
     sf::Texture noCityTexture = createNoCityGradient();
 
     sf::Sprite backgroundSprite(noCityTexture); 
 
+    // Wczytanie czcionki do wyświetlania tekstu
     sf::Font font;
     if (!font.loadFromFile("arial.ttf")) {
         cerr << "Failed to load font!" << endl;
         return 1;
     }
 
+    // Pole tekstowe do wpisywania miasta
     sf::Text inputText("", font, 24);
     inputText.setPosition(10, 50);
     inputText.setFillColor(sf::Color::Black);
 
+    // Prostokąt reprezentujący pole tekstowe
     sf::RectangleShape inputBox(sf::Vector2f(300, 40));
     inputBox.setPosition(10, 50);
     inputBox.setFillColor(sf::Color::White);
     inputBox.setOutlineColor(sf::Color::Black);
     inputBox.setOutlineThickness(1);
 
+    // Przycisk "Szukaj"
     sf::RectangleShape button(sf::Vector2f(100, 40));
     button.setPosition(320, 50);
     button.setFillColor(sf::Color(100, 149, 237));
@@ -174,6 +186,7 @@ int main() {
     buttonText.setPosition(330, 55);
     buttonText.setFillColor(sf::Color::White);
 
+    // Przycisk "Historia"
     sf::RectangleShape historyButton(sf::Vector2f(100, 40));
     historyButton.setPosition(440, 50);
     historyButton.setFillColor(sf::Color(100, 149, 237));
@@ -182,6 +195,7 @@ int main() {
     historyButtonText.setPosition(450, 55);
     historyButtonText.setFillColor(sf::Color::White);
 
+    // Przycisk "Wykres" 
     sf::RectangleShape newWindowButton(sf::Vector2f(100, 40));
     newWindowButton.setPosition(320, 100);
     newWindowButton.setFillColor(sf::Color(100, 149, 237));
@@ -190,6 +204,7 @@ int main() {
     newWindowButtonText.setPosition(330, 105);
     newWindowButtonText.setFillColor(sf::Color::White);
 
+    // Przycisk "Pogoda GPS"
     sf::RectangleShape gpsButton(sf::Vector2f(160, 40));
     gpsButton.setPosition(440,100);
     gpsButton.setFillColor(sf::Color(100, 149, 237));
@@ -198,7 +213,7 @@ int main() {
     gpsButtonText.setPosition(450, 105);
     gpsButtonText.setFillColor(sf::Color::White);
 
-
+    // Teksty wyświetlające aktualną pogodę
     sf::Text weatherTodayText("", font, 24);
     weatherTodayText.setPosition(10, 200);
 
@@ -208,12 +223,14 @@ int main() {
     sf::Text forecastText2("", font, 24);
     forecastText2.setPosition(10, 300);
 
-    sf::Text historyText("", font, 18);
+    // Tekst wyświetlający historię wyszukiwań
+    sf::Text historyText("", font, 24);
     historyText.setPosition(660, 50);
     historyText.setFillColor(sf::Color::Black);
     historyText.setOutlineColor(sf::Color::White);
     historyText.setOutlineThickness(1);
 
+    // Zmienne do przechowywania stanu aplikacji
     string currentInput = "";
     bool isCityEntered = false;
     bool isHistoryVisible = false;
@@ -228,20 +245,21 @@ int main() {
                 if (event.text.unicode == 8 && !currentInput.empty()) { // Backspace
                     currentInput.pop_back();
                 }
-                else if (event.text.unicode < 128 && event.text.unicode != 13) { // Add char
+                else if (event.text.unicode < 128 && event.text.unicode != 13) { // Dodawanie znaku do pola tekstowego
                     currentInput += static_cast<char>(event.text.unicode);
                 }
             }
-
+            // Obsługa kliknięć myszą
             if (event.type == sf::Event::MouseButtonPressed) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
+                    // Kliknięcie przycisku "Szukaj"
                     if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         city = currentInput;
                         if (!city.empty()) {
                             fetchWeatherData(city, temperatureToday, conditionToday, nextDays, isDay);
-
+                            // Zapisywanie historii miast
                             if (find(cityHistory.begin(), cityHistory.end(), city) == cityHistory.end()) {
                                 if (cityHistory.size() >= 3) {
                                     cityHistory.erase(cityHistory.begin());
@@ -249,12 +267,12 @@ int main() {
                                 cityHistory.push_back(city);
                                 saveCityHistory(cityHistory);
                             }
-
+                            // Ustawienie tła w zależności od pory dnia
                             if (isDay)
                                 backgroundSprite.setTexture(dayTexture);
                             else
                                 backgroundSprite.setTexture(nightTexture);
-
+                            // Aktualizacja tekstów z prognozą pogody
                             weatherTodayText.setString("Dzisiaj: " + temperatureToday + "°C, " + conditionToday);
                             if (nextDays.size() >= 2) {
                                 forecastText1.setString("Jutro: " + nextDays[0].first + ": " + nextDays[0].second);
@@ -267,6 +285,7 @@ int main() {
                             isCityEntered = false;
                         }
                     }
+                    // Kliknięcie przycisku "Historia" 
                     else if (historyButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         isHistoryVisible = !isHistoryVisible;
                     }
@@ -283,6 +302,7 @@ int main() {
                             newWindow.display();
                         }
                     }
+                    // Aktualizacja wyświetlanej historii wyszukiwań
                     else if (isHistoryVisible) {
                         for (int i = 0; i < cityHistory.size(); ++i) {
                             sf::FloatRect cityRect(560, 50 + i * 30, 300, 20);
@@ -294,6 +314,7 @@ int main() {
                     }
                 }
             }
+            // Kliknięcie przycisku "GPS Pogoda" 
             if (event.type == sf::Event::MouseButtonPressed) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -337,7 +358,7 @@ int main() {
         }
 
         inputText.setString(currentInput);
-
+        // Rysowanie elementów na ekranie
         window.clear();
         window.draw(backgroundSprite);
         window.draw(inputBox);
